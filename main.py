@@ -1,11 +1,2 @@
-from flask import Flask, render_template
-import os
-
-app = Flask(__name__)
-
-@app.route('/')
-def hello_world():
-    return render_template('index.html')
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=3000, debug=True)
+# This file is deprecated as we're using Express/Vite for the JioFiber network management app
+print("Please use 'npm run dev' to start the application")

@@ -1,9 +1,38 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { setupVite, serveStatic, log } from "./vite";
+import { NetworkStats, NetworkHistory } from "../shared/schema";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Mock data generation for network statistics
+function generateMockNetworkStats(): NetworkStats {
+  const now = new Date();
+  const history: NetworkHistory[] = Array.from({ length: 10 }).map((_, i) => ({
+    timestamp: new Date(now.getTime() - (i * 60 * 1000)), // Last 10 minutes
+    downloadSpeed: Math.random() * 500_000_000 + 100_000_000, // 100-600 Mbps
+    uploadSpeed: Math.random() * 300_000_000 + 50_000_000, // 50-350 Mbps
+  }));
+
+  return {
+    downloadSpeed: history[0].downloadSpeed,
+    uploadSpeed: history[0].uploadSpeed,
+    connectedDevices: Math.floor(Math.random() * 10) + 1,
+    latency: Math.floor(Math.random() * 50) + 5,
+    packetLoss: Math.random() * 2,
+    signalStrength: -(Math.floor(Math.random() * 30) + 50), // -50 to -80 dBm
+    networkLoad: Math.random() * 100,
+    peakHourUsage: new Date().getHours() >= 19 && new Date().getHours() <= 23,
+    history
+  };
+}
+
+// API endpoint for network statistics
+app.get('/api/network/stats', (_req: Request, res: Response) => {
+  const stats = generateMockNetworkStats();
+  res.json(stats);
+});
 
 app.use((req, res, next) => {
   const start = Date.now();

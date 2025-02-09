@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { NetworkStats as NetworkStatsType } from "@shared/schema";
+import { NetworkStats } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wifi, Upload, Download, Activity } from "lucide-react";
 import {
@@ -13,21 +13,29 @@ import {
 } from "recharts";
 
 export function NetworkStatsDisplay() {
-  const { data: stats, isLoading } = useQuery<NetworkStatsType>({
+  const { data: stats, isLoading } = useQuery<NetworkStats>({
     queryKey: ["/api/network/stats"],
-    refetchInterval: 5000,
+    refetchInterval: 5000, // Refresh every 5 seconds
   });
 
   if (isLoading || !stats) {
-    return null;
+    return <div className="flex justify-center items-center h-48">
+      <div className="animate-pulse">Loading network statistics...</div>
+    </div>;
   }
 
   const downloadMbps = Math.round(stats.downloadSpeed / 1_000_000);
   const uploadMbps = Math.round(stats.uploadSpeed / 1_000_000);
 
-  const chartData = [
-    { name: "Current", download: downloadMbps, upload: uploadMbps },
-  ];
+  const chartData = stats.history.map((entry) => ({
+    name: new Date(entry.timestamp).toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true
+    }),
+    download: Math.round(entry.downloadSpeed / 1_000_000),
+    upload: Math.round(entry.uploadSpeed / 1_000_000),
+  })).reverse(); // Show newest data on the right
 
   return (
     <div className="grid gap-6 md:grid-cols-3">
@@ -69,7 +77,9 @@ export function NetworkStatsDisplay() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{stats.connectedDevices}</div>
+          <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+            {stats.connectedDevices}
+          </div>
         </CardContent>
       </Card>
 
@@ -83,7 +93,7 @@ export function NetworkStatsDisplay() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[250px] mt-4">
+          <div className="h-[300px] mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" className="opacity-50" />
@@ -95,6 +105,7 @@ export function NetworkStatsDisplay() {
                 <YAxis 
                   stroke="currentColor"
                   className="text-muted-foreground text-xs"
+                  label={{ value: 'Speed (Mbps)', angle: -90, position: 'insideLeft' }}
                 />
                 <Tooltip 
                   contentStyle={{ 

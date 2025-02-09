@@ -32,10 +32,10 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Flask Server"
+args = "Start application"
 
 [[workflows.workflow]]
-name = "Flask Server"
+name = "Start application"
 author = "agent"
 
 [workflows.workflow.metadata]
@@ -46,5 +46,5 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python3 main.py"
-waitForPort = 3000
+args = "npm run dev"
+waitForPort = 5000

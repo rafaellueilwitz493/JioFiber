@@ -1,6 +1,30 @@
-import { pgTable, text, serial, integer, boolean, timestamp, real } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, real, array } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Network history entry schema
+export const networkHistorySchema = z.object({
+  timestamp: z.date(),
+  downloadSpeed: z.number(),
+  uploadSpeed: z.number(),
+});
+
+// Network stats schema without database
+export const networkStatsSchema = z.object({
+  downloadSpeed: z.number(),
+  uploadSpeed: z.number(),
+  connectedDevices: z.number(),
+  latency: z.number(),
+  packetLoss: z.number(),
+  signalStrength: z.number(),
+  networkLoad: z.number(),
+  peakHourUsage: z.boolean(),
+  history: z.array(networkHistorySchema)
+});
+
+export type NetworkHistory = z.infer<typeof networkHistorySchema>;
+export type NetworkStats = z.infer<typeof networkStatsSchema>;
+
 
 export const devices = pgTable("devices", {
   id: serial("id").primaryKey(),
@@ -24,6 +48,14 @@ export const insertDeviceSchema = createInsertSchema(devices).omit({
 export type InsertDevice = z.infer<typeof insertDeviceSchema>;
 export type Device = typeof devices.$inferSelect;
 
+export const networkHistory = pgTable("network_history", {
+  id: serial("id").primaryKey(),
+  network_stats_id: integer("network_stats_id").notNull(),
+  timestamp: timestamp("timestamp").notNull(),
+  downloadSpeed: integer("download_speed").notNull(),
+  uploadSpeed: integer("upload_speed").notNull(),
+});
+
 export const networkStats = pgTable("network_stats", {
   id: serial("id").primaryKey(),
   timestamp: timestamp("timestamp").notNull().defaultNow(),
@@ -35,7 +67,9 @@ export const networkStats = pgTable("network_stats", {
   signalStrength: integer("signal_strength").notNull().default(0), // in dBm
   networkLoad: real("network_load").notNull().default(0), // percentage
   peakHourUsage: boolean("peak_hour_usage").notNull().default(false),
+  // Added history field.  Type needs adjustment based on actual database structure.
 });
+
 
 export const insertNetworkStatsSchema = createInsertSchema(networkStats).omit({
   id: true,
@@ -43,4 +77,4 @@ export const insertNetworkStatsSchema = createInsertSchema(networkStats).omit({
 });
 
 export type InsertNetworkStats = z.infer<typeof insertNetworkStatsSchema>;
-export type NetworkStats = typeof networkStats.$inferSelect;
+//export type NetworkStats = typeof networkStats.$inferSelect;
