@@ -76,9 +76,19 @@ app.post('/api/devices/:id/toggle-block', (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Device not found' });
     }
 
+    // Toggle the blocked status
     device.isBlocked = !device.isBlocked;
+
+    // Update the device in our mock database
+    devices = devices.map(d => d.id === deviceId ? device : d);
+
     log(`Device ${deviceId} ${device.isBlocked ? 'blocked' : 'unblocked'}: ${device.name}`);
-    res.json(device);
+
+    // Send the complete updated device object back
+    res.json({
+      ...device,
+      lastSeen: new Date(), // Update last seen timestamp
+    });
   } catch (error) {
     log(`Error toggling device block status: ${error}`);
     res.status(500).json({ error: 'Failed to toggle device block status' });

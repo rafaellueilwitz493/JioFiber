@@ -1,9 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Device } from "@shared/schema";
 import { Shield, ShieldOff, Wifi, WifiOff, Download, Upload } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -13,6 +24,7 @@ import {
 
 export const DeviceList: React.FC = () => {
   const queryClient = useQueryClient();
+  const [processingDeviceId, setProcessingDeviceId] = useState<number | null>(null);
 
   const { data: devices, isLoading } = useQuery<Device[]>({
     queryKey: ['/api/devices'],
@@ -21,6 +33,7 @@ export const DeviceList: React.FC = () => {
 
   const toggleBlockMutation = useMutation({
     mutationFn: async (deviceId: number) => {
+      setProcessingDeviceId(deviceId);
       const response = await fetch(`/api/devices/${deviceId}/toggle-block`, {
         method: 'POST',
       });
@@ -28,16 +41,17 @@ export const DeviceList: React.FC = () => {
       return response.json();
     },
     onSuccess: (updatedDevice) => {
-      // Optimistically update the device in the cache
+      // Update the device in the cache
       queryClient.setQueryData<Device[]>(['/api/devices'], (oldDevices) => {
         if (!oldDevices) return oldDevices;
         return oldDevices.map(device => 
           device.id === updatedDevice.id ? updatedDevice : device
         );
       });
-      // Show toast or notification
-      const message = updatedDevice.isBlocked ? 'Device Blocked' : 'Device Unblocked';
-      // You can add a toast notification here if needed
+      setProcessingDeviceId(null);
+    },
+    onError: () => {
+      setProcessingDeviceId(null);
     },
   });
 
@@ -57,6 +71,10 @@ export const DeviceList: React.FC = () => {
       </div>
     );
   }
+
+  const handleBlockDevice = (deviceId: number) => {
+    toggleBlockMutation.mutate(deviceId);
+  };
 
   return (
     <div className="p-4">
@@ -113,22 +131,48 @@ export const DeviceList: React.FC = () => {
                   {Math.round(device.uploadUsage / (1024 * 1024))} MB
                 </div>
               </div>
-              <Button 
-                className={`w-full transition-colors duration-200 ${
-                  device.isBlocked ? 'bg-destructive hover:bg-destructive/90' : ''
-                }`}
-                variant={device.isBlocked ? "destructive" : "secondary"}
-                onClick={() => toggleBlockMutation.mutate(device.id)}
-                disabled={toggleBlockMutation.isPending}
-              >
-                {toggleBlockMutation.isPending && device.id === toggleBlockMutation.variables ? (
-                  <div className="animate-pulse">Processing...</div>
-                ) : device.isBlocked ? (
-                  <><ShieldOff className="w-4 h-4 mr-2" /> Unblock Device</>
-                ) : (
-                  <><Shield className="w-4 h-4 mr-2" /> Block Device</>
-                )}
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    className={`w-full ${
+                      device.isBlocked ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''
+                    }`}
+                    variant={device.isBlocked ? "destructive" : "secondary"}
+                  >
+                    {device.isBlocked ? (
+                      <><ShieldOff className="w-4 h-4 mr-2" /> Unblock Device</>
+                    ) : (
+                      <><Shield className="w-4 h-4 mr-2" /> Block Device</>
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {device.isBlocked ? 'Unblock Device' : 'Block Device'}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to {device.isBlocked ? 'unblock' : 'block'} {device.name}?
+                      {!device.isBlocked && " This will prevent the device from accessing the network."}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleBlockDevice(device.id)}
+                      className={device.isBlocked ? '' : 'bg-destructive hover:bg-destructive/90'}
+                    >
+                      {processingDeviceId === device.id ? (
+                        "Processing..."
+                      ) : device.isBlocked ? (
+                        "Unblock"
+                      ) : (
+                        "Block"
+                      )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </Card>
         ))}
