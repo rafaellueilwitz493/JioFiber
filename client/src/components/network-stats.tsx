@@ -31,7 +31,7 @@ export function NetworkStatsDisplay() {
 
   return (
     <div className="grid gap-6 md:grid-cols-3">
-      <Card className="hover:shadow-lg transition-shadow duration-200">
+      <Card className="hover:shadow-lg transition-shadow duration-200 border-blue-100 dark:border-blue-900/20">
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-full">
@@ -45,7 +45,7 @@ export function NetworkStatsDisplay() {
         </CardContent>
       </Card>
 
-      <Card className="hover:shadow-lg transition-shadow duration-200">
+      <Card className="hover:shadow-lg transition-shadow duration-200 border-green-100 dark:border-green-900/20">
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
             <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-full">
@@ -59,7 +59,7 @@ export function NetworkStatsDisplay() {
         </CardContent>
       </Card>
 
-      <Card className="hover:shadow-lg transition-shadow duration-200">
+      <Card className="hover:shadow-lg transition-shadow duration-200 border-purple-100 dark:border-purple-900/20">
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
             <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-full">
@@ -76,8 +76,8 @@ export function NetworkStatsDisplay() {
       <Card className="md:col-span-3 hover:shadow-lg transition-shadow duration-200">
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
-            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full">
-              <Activity className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+            <div className="p-2 bg-primary/10 rounded-full">
+              <Activity className="h-5 w-5 text-primary" />
             </div>
             Network Speed History
           </CardTitle>
@@ -87,27 +87,43 @@ export function NetworkStatsDisplay() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" className="opacity-50" />
-                <XAxis dataKey="name" />
-                <YAxis />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="currentColor"
+                  className="text-muted-foreground text-xs"
+                />
+                <YAxis 
+                  stroke="currentColor"
+                  className="text-muted-foreground text-xs"
+                />
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: "hsl(var(--background))",
-                    border: "1px solid hsl(var(--border))"
+                    backgroundColor: "var(--background)",
+                    border: "1px solid var(--border)",
+                    color: "var(--foreground)",
+                    borderRadius: "8px",
+                  }}
+                  labelStyle={{
+                    color: "var(--foreground)",
                   }}
                 />
                 <Line
                   type="monotone"
                   dataKey="download"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
                   name="Download"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  dot={{ fill: "#3b82f6", strokeWidth: 2 }}
+                  activeDot={{ r: 6, stroke: "#3b82f6" }}
                 />
                 <Line
                   type="monotone"
                   dataKey="upload"
-                  stroke="#16a34a"
-                  strokeWidth={2}
                   name="Upload"
+                  stroke="#22c55e"
+                  strokeWidth={2}
+                  dot={{ fill: "#22c55e", strokeWidth: 2 }}
+                  activeDot={{ r: 6, stroke: "#22c55e" }}
                 />
               </LineChart>
             </ResponsiveContainer>
