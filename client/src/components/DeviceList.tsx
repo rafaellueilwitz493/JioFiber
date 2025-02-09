@@ -3,7 +3,7 @@ import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Device } from "@shared/schema";
-import { Shield, ShieldOff, Wifi, WifiOff, Download, Upload } from "lucide-react";
+import { Shield, ShieldOff, Wifi, WifiOff, Download, Upload, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +25,7 @@ import {
 export const DeviceList: React.FC = () => {
   const queryClient = useQueryClient();
   const [processingDeviceId, setProcessingDeviceId] = useState<number | null>(null);
+  const [openDialogId, setOpenDialogId] = useState<number | null>(null);
 
   const { data: devices, isLoading } = useQuery<Device[]>({
     queryKey: ['/api/devices'],
@@ -41,17 +42,21 @@ export const DeviceList: React.FC = () => {
       return response.json();
     },
     onSuccess: (updatedDevice) => {
-      // Update the device in the cache
+      // Update the device in the cache immediately
       queryClient.setQueryData<Device[]>(['/api/devices'], (oldDevices) => {
         if (!oldDevices) return oldDevices;
-        return oldDevices.map(device => 
+        return oldDevices.map(device =>
           device.id === updatedDevice.id ? updatedDevice : device
         );
       });
+      // Force a refetch to ensure we have the latest data
+      queryClient.invalidateQueries({ queryKey: ['/api/devices'] });
       setProcessingDeviceId(null);
+      setOpenDialogId(null); // Close the dialog after successful mutation
     },
     onError: () => {
       setProcessingDeviceId(null);
+      setOpenDialogId(null);
     },
   });
 
@@ -87,12 +92,17 @@ export const DeviceList: React.FC = () => {
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {devices.map((device) => (
-          <Card 
-            key={device.id} 
-            className={`p-4 transition-all duration-200 hover:shadow-lg ${
+          <Card
+            key={device.id}
+            className={`p-4 relative transition-all duration-200 hover:shadow-lg ${
               device.isBlocked ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800' : ''
             }`}
           >
+            {processingDeviceId === device.id && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-10 rounded-lg">
+                <Loader2 className="animate-spin h-8 w-8 text-primary" />
+              </div>
+            )}
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="font-semibold flex items-center gap-2">
@@ -131,15 +141,18 @@ export const DeviceList: React.FC = () => {
                   {Math.round(device.uploadUsage / (1024 * 1024))} MB
                 </div>
               </div>
-              <AlertDialog>
+              <AlertDialog open={openDialogId === device.id} onOpenChange={(open) => setOpenDialogId(open ? device.id : null)}>
                 <AlertDialogTrigger asChild>
-                  <Button 
+                  <Button
                     className={`w-full ${
-                      device.isBlocked ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''
+                      device.isBlocked ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-secondary hover:bg-secondary/90'
                     }`}
                     variant={device.isBlocked ? "destructive" : "secondary"}
+                    disabled={processingDeviceId === device.id}
                   >
-                    {device.isBlocked ? (
+                    {processingDeviceId === device.id ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
+                    ) : device.isBlocked ? (
                       <><ShieldOff className="w-4 h-4 mr-2" /> Unblock Device</>
                     ) : (
                       <><Shield className="w-4 h-4 mr-2" /> Block Device</>
@@ -157,13 +170,13 @@ export const DeviceList: React.FC = () => {
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel onClick={() => setOpenDialogId(null)}>Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => handleBlockDevice(device.id)}
                       className={device.isBlocked ? '' : 'bg-destructive hover:bg-destructive/90'}
                     >
                       {processingDeviceId === device.id ? (
-                        "Processing..."
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
                       ) : device.isBlocked ? (
                         "Unblock"
                       ) : (
