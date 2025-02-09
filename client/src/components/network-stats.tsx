@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { NetworkStats as NetworkStatsType } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wifi, Upload, Download } from "lucide-react";
+import { Wifi, Upload, Download, Activity } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -30,65 +30,83 @@ export function NetworkStatsDisplay() {
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
-      <Card>
+    <div className="grid gap-6 md:grid-cols-3">
+      <Card className="hover:shadow-lg transition-shadow duration-200">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Download className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-full">
+              <Download className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
             Download Speed
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{downloadMbps} Mbps</div>
+          <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{downloadMbps} Mbps</div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="hover:shadow-lg transition-shadow duration-200">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-3">
+            <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-full">
+              <Upload className="h-5 w-5 text-green-600 dark:text-green-400" />
+            </div>
             Upload Speed
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{uploadMbps} Mbps</div>
+          <div className="text-3xl font-bold text-green-600 dark:text-green-400">{uploadMbps} Mbps</div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="hover:shadow-lg transition-shadow duration-200">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Wifi className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-3">
+            <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-full">
+              <Wifi className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            </div>
             Connected Devices
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.connectedDevices}</div>
+          <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{stats.connectedDevices}</div>
         </CardContent>
       </Card>
 
-      <Card className="md:col-span-3">
+      <Card className="md:col-span-3 hover:shadow-lg transition-shadow duration-200">
         <CardHeader>
-          <CardTitle>Network Speed History</CardTitle>
+          <CardTitle className="flex items-center gap-3">
+            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full">
+              <Activity className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+            </div>
+            Network Speed History
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[200px]">
+          <div className="h-[250px] mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3 3" className="opacity-50" />
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: "hsl(var(--background))",
+                    border: "1px solid hsl(var(--border))"
+                  }}
+                />
                 <Line
                   type="monotone"
                   dataKey="download"
-                  stroke="#2563eb"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
                   name="Download"
                 />
                 <Line
                   type="monotone"
                   dataKey="upload"
                   stroke="#16a34a"
+                  strokeWidth={2}
                   name="Upload"
                 />
               </LineChart>
