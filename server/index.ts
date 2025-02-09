@@ -1,10 +1,90 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { setupVite, serveStatic, log } from "./vite";
-import { NetworkStats, NetworkHistory } from "../shared/schema";
+import { NetworkStats, NetworkHistory, Device } from "../shared/schema";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Mock devices data
+let devices: Device[] = [
+  { 
+    id: 1, 
+    name: "Living Room TV",
+    ipAddress: "192.168.1.100",
+    macAddress: "00:1A:2B:3C:4D:5E",
+    isBlocked: false,
+    isOnline: true,
+    lastSeen: new Date(),
+    downloadUsage: 1024 * 1024 * 500, // 500 MB
+    uploadUsage: 1024 * 1024 * 200,   // 200 MB
+  },
+  { 
+    id: 2, 
+    name: "iPhone 13",
+    ipAddress: "192.168.1.101",
+    macAddress: "A1:B2:C3:D4:E5:F6",
+    isBlocked: false,
+    isOnline: true,
+    lastSeen: new Date(),
+    downloadUsage: 1024 * 1024 * 1200, // 1.2 GB
+    uploadUsage: 1024 * 1024 * 300,    // 300 MB
+  },
+  { 
+    id: 3, 
+    name: "Gaming PC",
+    ipAddress: "192.168.1.102",
+    macAddress: "FF:EE:DD:CC:BB:AA",
+    isBlocked: false,
+    isOnline: true,
+    lastSeen: new Date(),
+    downloadUsage: 1024 * 1024 * 5000, // 5 GB
+    uploadUsage: 1024 * 1024 * 1000,   // 1 GB
+  },
+  { 
+    id: 4, 
+    name: "Smart TV Bedroom",
+    ipAddress: "192.168.1.103",
+    macAddress: "11:22:33:44:55:66",
+    isBlocked: false,
+    isOnline: false,
+    lastSeen: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
+    downloadUsage: 1024 * 1024 * 800,  // 800 MB
+    uploadUsage: 1024 * 1024 * 100,    // 100 MB
+  }
+];
+
+// Get all devices
+app.get('/api/devices', (_req: Request, res: Response) => {
+  try {
+    log(`Fetching all devices. Total count: ${devices.length}`);
+    res.json(devices);
+  } catch (error) {
+    log(`Error fetching devices: ${error}`);
+    res.status(500).json({ error: 'Failed to fetch devices' });
+  }
+});
+
+// Toggle device block status
+app.post('/api/devices/:id/toggle-block', (req: Request, res: Response) => {
+  try {
+    const deviceId = parseInt(req.params.id);
+    const device = devices.find(d => d.id === deviceId);
+
+    if (!device) {
+      log(`Device not found: ${deviceId}`);
+      return res.status(404).json({ error: 'Device not found' });
+    }
+
+    device.isBlocked = !device.isBlocked;
+    log(`Device ${deviceId} ${device.isBlocked ? 'blocked' : 'unblocked'}: ${device.name}`);
+    res.json(device);
+  } catch (error) {
+    log(`Error toggling device block status: ${error}`);
+    res.status(500).json({ error: 'Failed to toggle device block status' });
+  }
+});
+
 
 // Mock data generation for network statistics
 function generateMockNetworkStats(): NetworkStats {
