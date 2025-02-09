@@ -82,12 +82,36 @@ export class MemStorage implements IStorage {
 
   async addNetworkStats(stats: InsertNetworkStats): Promise<NetworkStats> {
     const id = this.statsId++;
+    const now = new Date();
+    const hour = now.getHours();
+
+    // Calculate simulated metrics
+    const latency = Math.floor(Math.random() * 50) + 10; // 10-60ms
+    const packetLoss = Math.random() * 2; // 0-2%
+    const signalStrength = -(Math.floor(Math.random() * 20) + 50); // -50 to -70 dBm
+    const networkLoad = Math.random() * 100; // 0-100%
+    const peakHourUsage = hour >= 19 && hour <= 23; // Peak hours: 7 PM - 11 PM
+
     const newStats: NetworkStats = {
       id,
-      timestamp: new Date(),
+      timestamp: now,
       ...stats,
+      latency,
+      packetLoss,
+      signalStrength,
+      networkLoad,
+      peakHourUsage,
     };
     this.networkStats.set(id, newStats);
+
+    // Keep only last 24 hours of data
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    for (const [key, stat] of this.networkStats.entries()) {
+      if (stat.timestamp < twentyFourHoursAgo) {
+        this.networkStats.delete(key);
+      }
+    }
+
     return newStats;
   }
 }

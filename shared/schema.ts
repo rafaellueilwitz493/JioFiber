@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -30,6 +30,11 @@ export const networkStats = pgTable("network_stats", {
   downloadSpeed: integer("download_speed").notNull(), // in bits/s
   uploadSpeed: integer("upload_speed").notNull(), // in bits/s
   connectedDevices: integer("connected_devices").notNull(),
+  latency: integer("latency").notNull().default(0), // in milliseconds
+  packetLoss: real("packet_loss").notNull().default(0), // percentage
+  signalStrength: integer("signal_strength").notNull().default(0), // in dBm
+  networkLoad: real("network_load").notNull().default(0), // percentage
+  peakHourUsage: boolean("peak_hour_usage").notNull().default(false),
 });
 
 export const insertNetworkStatsSchema = createInsertSchema(networkStats).omit({

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { TopBar } from "@/components/top-bar";
 import { DeviceList } from "@/components/device-list";
 import { NetworkStatsDisplay } from "@/components/network-stats";
+import { AdvancedNetworkStats } from "@/components/advanced-network-stats";
 import { connectWebSocket } from "@/lib/websocket";
 
 export default function Home() {
@@ -14,7 +15,11 @@ export default function Home() {
       <TopBar />
       <main className="container mx-auto p-4 space-y-6">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <NetworkStatsDisplay />
+        <div className="space-y-6">
+          <NetworkStatsDisplay />
+          <h2 className="text-2xl font-bold">Advanced Network Analytics</h2>
+          <AdvancedNetworkStats />
+        </div>
         <h2 className="text-2xl font-bold">Connected Devices</h2>
         <DeviceList />
       </main>
