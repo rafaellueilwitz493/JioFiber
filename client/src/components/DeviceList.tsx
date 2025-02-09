@@ -27,8 +27,17 @@ export const DeviceList: React.FC = () => {
       if (!response.ok) throw new Error('Failed to toggle device block status');
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/devices'] });
+    onSuccess: (updatedDevice) => {
+      // Optimistically update the device in the cache
+      queryClient.setQueryData<Device[]>(['/api/devices'], (oldDevices) => {
+        if (!oldDevices) return oldDevices;
+        return oldDevices.map(device => 
+          device.id === updatedDevice.id ? updatedDevice : device
+        );
+      });
+      // Show toast or notification
+      const message = updatedDevice.isBlocked ? 'Device Blocked' : 'Device Unblocked';
+      // You can add a toast notification here if needed
     },
   });
 
@@ -105,12 +114,14 @@ export const DeviceList: React.FC = () => {
                 </div>
               </div>
               <Button 
-                className="w-full transition-colors duration-200"
+                className={`w-full transition-colors duration-200 ${
+                  device.isBlocked ? 'bg-destructive hover:bg-destructive/90' : ''
+                }`}
                 variant={device.isBlocked ? "destructive" : "secondary"}
                 onClick={() => toggleBlockMutation.mutate(device.id)}
                 disabled={toggleBlockMutation.isPending}
               >
-                {toggleBlockMutation.isPending ? (
+                {toggleBlockMutation.isPending && device.id === toggleBlockMutation.variables ? (
                   <div className="animate-pulse">Processing...</div>
                 ) : device.isBlocked ? (
                   <><ShieldOff className="w-4 h-4 mr-2" /> Unblock Device</>
