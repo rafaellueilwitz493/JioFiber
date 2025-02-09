@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { WebSocketServer } from "ws";
+import { WebSocketServer, WebSocket } from "ws"; // Import WebSocket
 import { storage } from "./storage";
 import { insertDeviceSchema } from "@shared/schema";
 
@@ -18,7 +18,7 @@ export function registerRoutes(app: Express): Server {
     if (!parsed.success) {
       return res.status(400).json({ error: "Invalid device data" });
     }
-    
+
     const device = await storage.createDevice(parsed.data);
     broadcastUpdate(wss);
     res.json(device);
